@@ -1,0 +1,14 @@
+.btn-success-light{
+    background-color: #1a5322 !important;
+    color: #fff !important;
+}
+
+.btn-success-light:hover{
+    background-color: #5cb85c !important;
+}
+a.btn-success-light:visited{
+    color: #fff;;
+}
+.bg-success{
+    color: #fff !important;
+}
