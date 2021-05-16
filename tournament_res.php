@@ -22,9 +22,10 @@ $tournmanent_id = $request->variable("id",0);
 
 $sql = "SELECT u.username, SUM(
                               IF(up.first_player_score = g.first_player_score AND up.second_player_score=g.second_player_score,3,0)+
-                              IF(up.first_player_score = g.first_player_score OR up.second_player_score=g.second_player_score,1,0)) as point_res,
+                              IF(g.first_player_score > g.second_player_score AND up.first_player_score = g.first_player_score OR 
+                                 g.first_player_score < g.second_player_score AND up.second_player_score=g.second_player_score,1,0)) as point_res,
         ( 
-                SELECT SUM(IF(ucq1.answer = cq1.right_answer,5,0))
+                SELECT SUM(IF(ucq1.answer = cq1.right_answer,3,0))
                 FROM `user_castom_question` ucq1
                 LEFT JOIN castom_question cq1 ON cq1.id=ucq1.`castom_req_id`
                 WHERE ucq1.user_id = u.user_id AND cq1.tounament_id=g.tournament_id    
@@ -34,6 +35,7 @@ $sql = "SELECT u.username, SUM(
         LEFT JOIN ". USERS_TABLE ." as u  ON up.user_id=u.user_id  
         WHERE g.tournament_id=$tournmanent_id
         GROUP BY u.user_id
+        ORDER BY point_res DESC
         ";
 $result = $db->sql_query($sql);
 $rows = $db->sql_fetchrowset($result);

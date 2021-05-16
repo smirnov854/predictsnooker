@@ -15,9 +15,10 @@ try {
     switch ($input_data->method) {
         case "do_prediction":
             if (!empty($input_data->first_player_score) || !empty($input_data->second_player_score)) {
-                $sql = "SELECT max_goals, date_start 
-                        FROM levels 
-                        WHERE levels.id = (SELECT level_id FROM game g WHERE g.id={$input_data->game_id})";
+                $sql = "SELECT max_goals, g.date_start 
+                        FROM game g
+                        LEFT JOIN levels lvl ON lvl.id=g.level_id 
+                        WHERE g.id={$input_data->game_id}";
                 $res = $db->sql_query($sql);
                 $max_goals_query = $db->sql_fetchrowset($res);
                 $max_goals = $max_goals_query[0]['max_goals'];
@@ -55,10 +56,10 @@ try {
                                             `castom_req_id`,
                                             `answer`) 
                                   VALUES('{$user_id}',
-                                  {$input_data->req_id},
-                                  {$input_data->req_answer}                                  
+                                  '{$input_data->req_id}',
+                                  '{$input_data->req_answer}'                                  
                                  )
-                                 ON DUPLICATE KEY UPDATE  `answer` = {$input_data->req_answer}";    
+                                 ON DUPLICATE KEY UPDATE  `answer` = '{$input_data->req_answer}'";    
             
             $res = $db->sql_query($sql);           
             break;

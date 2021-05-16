@@ -32,7 +32,7 @@ $sql = "SELECT t.id,
                lvl.id as level_id,
                g.first_player_score,
                g.second_player_score,
-               lvl.date_start as game_date_start,               
+               g.date_start as game_date_start,               
                lvl.max_goals
         FROM tournament t
         LEFT JOIN game g ON g.tournament_id=t.id    
@@ -53,6 +53,18 @@ $rows = $res_arr[1];
 $req = "SELECT * FROM castom_question WHERE tounament_id = $id";
 $result = $db->sql_query($req);
 $req = $db->sql_fetchrowset($result);
+
+
+$sql = "SELECT DISTINCT first_player_name as player
+        FROM game
+        WHERE tournament_id= $id AND first_player_name IS NOT NULL AND first_player_name<>''
+        UNION 
+        SELECT DISTINCT second_player_name as player
+        FROM game
+        WHERE tournament_id= $id AND second_player_name IS NOT NULL AND second_player_name<>''";
+
+$result = $db->sql_query($sql);
+$player_list = $db->sql_fetchrowset($result);
 
 ?>
 <html>
@@ -131,6 +143,11 @@ $req = $db->sql_fetchrowset($result);
             <input class="form-control left"  style="width: 400px!important;" type="text" v-model="custom_req[2].text" placeholder="Вопрос 3" @focusout="save_custom_req(custom_req[2].req_id,custom_req[2].text,custom_req[2].answer)">
             <input class="form-control left" style="width: 60px!important;"type="text" v-model="custom_req[2].answer" @focusout="set_right_answer(custom_req[2].req_id,custom_req[2].text,custom_req[2].answer)">
         </div>
+        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-4">Победитель &nbsp&nbsp
+            <select class="form-control col-lg-3 col-sm-8" v-model="custom_req[3].answer" @change="set_right_answer(custom_req[3].req_id,custom_req[3].text,custom_req[3].answer)">
+                <option v-for="player in players" v-bind:value="player">{{player}}</option>
+            </select>
+        </div>
     </div>
     
     <div class="clearfix"></div>    
@@ -171,7 +188,7 @@ $req = $db->sql_fetchrowset($result);
                         level_id:<?=$rows[$i]['level_id']?>, 
                         cur_index:<?=$i?>,
                         second_player_score:<?=$rows[$i]['second_player_score']?>,
-                        level_name : '<?= ($level == $max_level) ? "Финал" : (($level == ($max_level-1)) ? "1/2 финала" : (($level == ($max_level-2)) ? "1/4 финала" : "Тур ".$level))?>'
+                        level_name : '<?= ($level == $max_level) ? "Финал" : (($level == ($max_level-1)) ? "1/2 финала" : (($level == ($max_level-2)) ? "1/4 финала" : "Тур ".$level))?>'                        
                     }<?=($i < count($rows) - 1) ? "," : ""?>
                     <?php endfor?>
                 ]
@@ -187,7 +204,7 @@ $req = $db->sql_fetchrowset($result);
         "<div class='col-lg-4 col-md-12 col-sm-12 col-xs-12 float-left' v-for='(level,index) in levels'>" +
         "<label class='col-12 text-center bg-success'>{{level.games[0].level_name}}</label>" +
         "<div class='row my-md-3 my-sm-3'>" +
-        "<div class='col col-5'><date-picker v-model='level.games[0].date_start' :config='options'></date-picker><font style='font-size: 0.6em'>Дата окончания принятия прогнозов</font></div>" +
+        "<div class='col col-5'></div>" +
         "<div class='col col-3'><input class='form-control' type='text' v-model='level.games[0].max_goals'><font style='font-size: 0.6em'>До скольки побед</font></div>" +        
         "<div class='col col-4'><button class='btn btn-sm btn-success-light' v-on:click='update_level_data(level.games[0])'>Сохранить</button></div>" +
         "</div>" +
@@ -195,12 +212,12 @@ $req = $db->sql_fetchrowset($result);
         "<div class='row my-md-3 my-sm-3'>" +
         "<div class='col col-4'><input class='form-control' type='text'   v-model='game.name_1' placeholder='Имя игрока'></div>" +
         "<div class='col col-3'><input class='form-control' type='number' v-model='game.first_player_score'></div>" +
-        "<div class='col col-5'><button class='btn btn-sm btn-success-light' v-on:click='update_game_data(game,levels)'>Сохранить</button></div>" +        
+        "<div class='col col-5'><date-picker v-model='game.date_start' :config='options' ></date-picker><font style='font-size: 0.6em'>Дата окончания принятия прогнозов</font></div>" +        
         "</div>" +
         "<div class='row my-md-3 my-sm-3'>" +
         "<div class='col col-4'><input class='form-control' type='text'   v-model='game.name_2' placeholder='Имя игрока'></div>" +
         "<div class='col col-3'><input class='form-control' type='number' v-model='game.second_player_score'></div>" +
-        "<div class='col col-5'></div>" +        
+        "<div class='col col-5'><button class='btn btn-sm btn-success-light' v-on:click='update_game_data(game,levels)'>Сохранить</button></div>" +        
         "</div>" +
         "</div>" +
         "</div>",
@@ -225,6 +242,10 @@ $req = $db->sql_fetchrowset($result);
             },
             
             update_game_data: function(game,levels){
+                if(game.date_start == ''){
+                    alert("Необходимо выбрать дату начала!");
+                    return;
+                }
                 axios.post("admin_ajax.php", {
                     method: "edit_game_data",
                     game_id : game.id,                    
@@ -246,7 +267,7 @@ $req = $db->sql_fetchrowset($result);
                                 }
                                 for(var z in levels[game.level+1].games){
                                     if(levels[game.level+1].games[z].id == game.child_id){
-                                        if(game.id%2 == 0){
+                                        if(game.id%2 != 0){
                                             levels[game.level+1].games[z].name_1 = tmp_name
                                         }else{
                                             levels[game.level+1].games[z].name_2 = tmp_name
@@ -287,8 +308,14 @@ $req = $db->sql_fetchrowset($result);
             custom_req :[
                         {req_id:'<?=$req[0]['id']?>',text:'<?=$req[0]['text']?>',answer:'<?=$req[0]['right_answer']?>'},
                         {req_id:'<?=$req[1]['id']?>',text:'<?=$req[1]['text']?>',answer:'<?=$req[1]['right_answer']?>'},
-                        {req_id:'<?=$req[2]['id']?>',text:'<?=$req[2]['text']?>',answer:'<?=$req[2]['right_answer']?>'}
-            ]           
+                        {req_id:'<?=$req[2]['id']?>',text:'<?=$req[2]['text']?>',answer:'<?=$req[2]['right_answer']?>'},
+                        {req_id:'<?=$req[3]['id']?>',text:'<?=$req[3]['text']?>',answer:'<?=$req[3]['right_answer']?>'}
+            ],
+            players : [
+                <?php foreach($player_list as $row):?>
+                '<?=$row['player']?>',
+                <?php endforeach;?>
+            ],   
         },
         
         methods:{            

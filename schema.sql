@@ -60,3 +60,6 @@ CREATE TABLE user_castom_question(
 )DEFAULT CHARACTER SET cp1251 COLLATE cp1251_bin;
 
 ALTER TABLE `user_castom_question` ADD UNIQUE `req_user` (`castom_req_id`, `user_id`);
+ALTER TABLE `game` ADD `date_start` INT(4) NULL AFTER `child_id`;
+ALTER TABLE `castom_question` CHANGE `right_answer` `right_answer` VARCHAR(50) NULL DEFAULT NULL;
+ALTER TABLE `user_castom_question` CHANGE `answer` `answer` VARCHAR(250) NULL DEFAULT NULL;

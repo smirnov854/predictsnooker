@@ -22,9 +22,10 @@ $db->sql_query($sql);
 $sql = "CREATE TEMPORARY TABLE tmp_table
         SELECT t.id,
                SUM((IF(up.first_player_score = g.first_player_score AND up.second_player_score=g.second_player_score,3,0) + 
-               IF(up.first_player_score = g.first_player_score OR up.second_player_score=g.second_player_score,1,0))) as point_res,
+               IF(g.first_player_score > g.second_player_score AND up.first_player_score = g.first_player_score OR 
+                                 g.first_player_score < g.second_player_score AND up.second_player_score=g.second_player_score,1,0))) as point_res,
                 ( 
-                SELECT SUM(IF(ucq1.answer = cq1.right_answer,5,0))
+                SELECT SUM(IF(ucq1.answer = cq1.right_answer,3,0))
                 FROM `user_castom_question` ucq1
                 LEFT JOIN castom_question cq1 ON cq1.id=ucq1.`castom_req_id`
                 WHERE ucq1.user_id = $user_id AND cq1.tounament_id=t.id    
@@ -76,7 +77,7 @@ $rows = $db->sql_fetchrowset($result);
 
 
 <div id="vue_app">
-
+    <img src="Logo.jpeg" class="float-left mx-auto">
     <table class="table table-bordered">
         <thead>
         <tr>            

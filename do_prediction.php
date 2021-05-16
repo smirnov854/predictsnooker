@@ -32,7 +32,7 @@ $sql = "SELECT t.id,
                lvl.id as level_id,
                g.first_player_score,
                g.second_player_score,
-               lvl.date_start as game_date_start,               
+               g.date_start as game_date_start,               
                lvl.max_goals,
                up.first_player_score as up_first_player_score,
                up.second_player_score as up_second_player_score,
@@ -44,7 +44,7 @@ $sql = "SELECT t.id,
         LEFT JOIN game g ON g.tournament_id=t.id    
         LEFT JOIN user_prediction up ON up.game_id = g.id AND up.user_id={$user->data['user_id']}
         LEFT JOIN levels lvl ON lvl.id=g.level_id
-        WHERE lvl.date_start IS NOT NULL AND 
+        WHERE -- lvl.date_start IS NOT NULL AND 
               t.id = $id AND 
               g.first_player_name IS NOT NULL AND 
               g.first_player_name !='' AND 
@@ -60,7 +60,12 @@ foreach($rows as $row){
     $res_arr[$row['game_level']][]=$row;
     $max_level = $row['game_level']> $max_level ? $row['game_level'] :$max_level;
 }
-//$rows = $res_arr[1];
+$total_points = 0;
+for($i = 0;$i < count($rows);$i++){
+    $total_points = $total_points + (($rows[$i]['point_res'] !='-1')&&!empty($rows[$i]['point_res'])  ? $rows[$i]['point_res']: 0 );
+    $total_points = $total_points + (($rows[$i]['point_winner'] !='-1')&&!empty($rows[$i]['point_winner'])  ? $rows[$i]['point_winner']: 0);    
+}
+
 
 
 $req = "SELECT  cq.*,ucq.answer as user_answer
@@ -70,8 +75,16 @@ $req = "SELECT  cq.*,ucq.answer as user_answer
 $result = $db->sql_query($req);
 $req = $db->sql_fetchrowset($result);
 
+$sql = "SELECT DISTINCT first_player_name as player
+        FROM game
+        WHERE tournament_id= $id AND first_player_name IS NOT NULL AND first_player_name<>''
+        UNION 
+        SELECT DISTINCT second_player_name as player
+        FROM game
+        WHERE tournament_id= $id AND second_player_name IS NOT NULL AND second_player_name<>''"; 
 
-
+$result = $db->sql_query($sql);
+$player_list = $db->sql_fetchrowset($result);
 
 ?>
 <html>
@@ -93,11 +106,14 @@ $req = $db->sql_fetchrowset($result);
 
     <script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
     <meta name="viewport" content="width=600">
+   
 </head>
 <body>
 
 <div id="main_content">
-    <div class="col-lg-12 col-md-12 col-sm-12 my-md-4 my-sm-4"><a class='btn btn-success-light btn-block' href="user.php">К списку турниров</a></div>
+    
+    <div class="col-lg-12 col-md-12 col-sm-12 my-md-4 my-sm-4"><a class='btn btn-success-light btn-block' href="user.php">К списку турниров</a>
+    </div>    
     <div class="col-lg-12 col-md-12 col-sm-12 row mx-md-2 my-md-2">
         <div class="col-lg-3 col-md-6 col-sm-12"><b>Название турнира :</b> {{tournament_name}}</div>
         <div class="col-lg-3 col-md-6 col-sm-12"><b>Дата начала:</b> {{date_start }}</div>
@@ -106,21 +122,25 @@ $req = $db->sql_fetchrowset($result);
     <div class="col-lg-12 col-md-12 col-sm-12">
         <label class="col-lg-12 col-md-12 col-sm-12"><b>Дополнительные вопросы</b></label>
 
-        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-2">{{custom_req[0].text}}&nbsp&nbsp<input class="form-control" type="text" v-model="custom_req[0].user_answer" 
+        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-4">{{custom_req[0].text}}&nbsp&nbsp<input class="form-control" type="text" v-model="custom_req[0].user_answer" 
                    @focusout="save_custom_req(custom_req[0].req_id,custom_req[0].user_answer)" :disabled="!access_to_do_predict" style="width: 60px!important;">
         </div>
-        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-2">{{custom_req[1].text}}&nbsp&nbsp
+        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-4">{{custom_req[1].text}}&nbsp&nbsp
             <input class="form-control" type="text" v-model="custom_req[1].user_answer"  :disabled="!access_to_do_predict"
                    @focusout="save_custom_req(custom_req[1].req_id,custom_req[1].user_answer)" style="width: 60px!important;">
         </div>
-        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-2">{{custom_req[2].text}}&nbsp&nbsp
+        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-4">{{custom_req[2].text}}&nbsp&nbsp
             <input class="form-control" type="text" v-model="custom_req[2].user_answer" :disabled="!access_to_do_predict"
                    @focusout="save_custom_req(custom_req[2].req_id,custom_req[2].user_answer)" style="width: 60px!important;">            
         </div>
+        <div class="form-row col-lg-12 col-md-12 col-sm-12 my-md-2 my-sm-4">Победитель &nbsp&nbsp
+            <select class="form-control col-lg-3 col-sm-8" v-model="custom_req[3].user_answer" :disabled="!access_to_do_predict" @change="save_custom_req(custom_req[3].req_id,custom_req[3].user_answer)">
+                <option v-for="player in players" v-bind:value="player">{{player}}</option>
+            </select>
+        </div>
        
-    </div>    
-    
-    
+    </div>
+    <div class='col-lg-12 col-md-12 col-sm-12 col-xs-12'><b>Вы заработали {{points_counter}} баллов</b></div>
     <app-games></app-games>
 
 </div>
@@ -139,7 +159,7 @@ $req = $db->sql_fetchrowset($result);
             <?=$level?>:
             {
                 games:[
-                    <?php for($i = 0;$i < count($rows);$i++):?>
+                    <?php  for($i = 0;$i < count($rows);$i++): ?>
                     {
                         id:<?=$rows[$i]['game_id']?>,
                         level: <?=$rows[$i]['game_level']?>,
@@ -157,10 +177,10 @@ $req = $db->sql_fetchrowset($result);
                         point_res:<?= (($rows[$i]['point_res'] !='-1')  ? $rows[$i]['point_res']: "false" )?>,
                         level_name : '<?= ($level == $levels) ? "Финал" : (($level == ($levels-1)) ? "1/2 финала" : (($level == ($levels-2)) ? "1/4 финала" : "Тур ".$level))?>',
                         point_winner:<?= (($rows[$i]['point_winner'] !='-1')  ? $rows[$i]['point_winner']: "false" )?>
-                    }<?=($i < count($rows) - 1) ? "," : ""?>
+                    }<?=","//($i < count($rows) - 1) ? "," : ""?>
                     <?php endfor?>
                 ]
-            }<?=($level == $max_level) ? "" : ","?>
+            }<?= ","//($level == $max_level) ? "" : ","?>
             <?php endforeach;?>
         }
             
@@ -179,10 +199,10 @@ $req = $db->sql_fetchrowset($result);
                 
             }
         },
-        template:"<div class='col-lg-12 col-md-12 col-sm-12'><div class='col-lg-12 col-md-12 col-sm-12 col-xs-12'><b>Вы заработали {{points_counter}} баллов</b></div>" +
-        "<div class='col-lg-4 col-md-12 col-sm-12 col-xs-12 my-md-2 float-left' v-for='(level,index) in levels'>" +
+        template:"<div class='col-lg-12 col-md-12 col-sm-12 d-flex flex-column-reverse'>" +
+        "<div class='col-lg-4 col-md-12 col-sm-12 col-xs-12 my-md-2 float-left' v-for='(level,index) in levels' >" +
         "<label class='col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center bg-success'>{{level.games[0].level_name}}</label>" +
-        "<div class='col col-lg-12 col-md-12 col-sm-12 col-xs-12'>Окончание принятия прогнозов: {{level.games[0].date_start}}</div>" +
+        //"<div class='col col-lg-12 col-md-12 col-sm-12 col-xs-12'>Окончание принятия прогнозов: {{level.games[0].date_start}}</div>" +
         "<div class='col col-lg-12 col-md-12 col-sm-12 col-xs-12'>Максимальное количество побед: {{level.games[0].max_goals}}</div>" +
         "<div class='col-lg-12 col-md-12 col-sm-12 col-xs-12 bg-light rounded border-bottom px-md-2 py-md-2 my-md-3' v-for='game in level.games'>" +
         "<div class='row'>" +
@@ -195,7 +215,7 @@ $req = $db->sql_fetchrowset($result);
         "<div class='row'>" +
         "<div class='col col-lg-4 col-md-4 col-sm-4 col-xs-4'>{{game.name_1}}</div>" +
         "<div class='col col-lg-3 col-md-3 col-sm-3 col-xs-3 my-md-1 my-sm-1'>" +
-        "<input class='form-control' type='number' v-if='game.not_disabled && !game.disabled_time' v-model='game.first_player_score'>" +
+        "<input class='form-control' type='text' v-if='game.not_disabled && !game.disabled_time' v-model='game.first_player_score'>" +
         "<span class='float-left' title='Ваш прогноз' v-else>{{game.up_first_player_score}}</span>" +
         "<span class='float-right' title='Результат игры' v-if='game.has_result'>{{game.first_player_score}}</span>" +
         "</div>" +
@@ -204,7 +224,7 @@ $req = $db->sql_fetchrowset($result);
         "<div class='row my-md-1'>" +
         "<div class='col col-lg-4 col-md-4 col-sm-4 col-xs-4'>{{game.name_2}}</div>" +
         "<div class='col col-lg-3 col-md-3 col-sm-3 col-xs-3 my-md-1 my-sm-1'>" +
-        "<input class='form-control float-left' type='number' v-if='game.not_disabled && !game.disabled_time' v-model='game.second_player_score'>" +
+        "<input class='form-control float-left' type='text' v-if='game.not_disabled && !game.disabled_time' v-model='game.second_player_score'>" +
         "<span class='float-left' title='Ваш прогноз' v-else>{{game.up_second_player_score}}</span>" +
         "<span class='float-right' title='Результат игры' v-if='game.has_result'>{{game.second_player_score}}</span>" +
         "</div>" +
@@ -239,7 +259,9 @@ $req = $db->sql_fetchrowset($result);
 
     new Vue({
         el:"#main_content",
-        data:{
+        
+        data:{                
+            points_counter : <?=$total_points?>,
             tournament_id: <?=$id?>,
             tournament_name:'<?=$rows[0]['tournament_name']?>',
             date_start:'<?=date("d.m.Y",$rows[0]['date_start'])?>',
@@ -247,8 +269,17 @@ $req = $db->sql_fetchrowset($result);
             custom_req :[
                 {req_id:'<?=$req[0]['id']?>',text:'<?=$req[0]['text']?>',user_answer:'<?=$req[0]['user_answer']?>'},
                 {req_id:'<?=$req[1]['id']?>',text:'<?=$req[1]['text']?>',user_answer:'<?=$req[1]['user_answer']?>'},
-                {req_id:'<?=$req[2]['id']?>',text:'<?=$req[2]['text']?>',user_answer:'<?=$req[2]['user_answer']?>'}
-            ]
+                {req_id:'<?=$req[2]['id']?>',text:'<?=$req[2]['text']?>',user_answer:'<?=$req[2]['user_answer']?>'},
+                {req_id:'<?=$req[3]['id']?>',text:'<?=$req[3]['text']?>',user_answer:'<?=$req[3]['user_answer']?>'}
+            ],
+            players : [
+                <?php 
+                $cnt = count($player_list);
+                foreach($player_list as $row):?>
+                '<?=$row['player']?>',
+                <?php endforeach;?>
+            ],
+            winner : "",
         },
         methods: {
             save_custom_req: function(req_id,user_answer){

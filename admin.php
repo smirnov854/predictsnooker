@@ -4,14 +4,12 @@ define('IN_PHPBB', true);
 $phpbb_root_path = (defined('PHPBB_ROOT_PATH')) ? PHPBB_ROOT_PATH : './';
 $phpEx = substr(strrchr(__FILE__, '.'), 1);
 include($phpbb_root_path . 'common.' . $phpEx);
-
-
-
-
 // Start session management
 $user->session_begin();
 $auth->acl($user->data);
 $user->setup();
+//$user->session_kill();
+//$user->session_begin();
 page_header("Прогнозы");
 
 if ($user->data['user_id'] == ANONYMOUS)
@@ -83,7 +81,7 @@ $rows = $db->sql_fetchrowset($result);
 <body>
 -->
 
-<div id="vue_app">
+<div id="vue_app">    
     <button class="btn btn-success-light btn-block my-md-3 my-sm-3" data-toggle="modal" data-target="#tournament_add_modal">Добавить турнир</button>
     <div class="modal" tabindex="-1" role="dialog" id="tournament_add_modal">
         <div class="modal-dialog" role="document">

@@ -32,7 +32,7 @@ try {
             $res = $db->sql_query($sql);
             $tournament_id = $db->sql_nextid();
 
-            for ($t = 0; $t < 3; $t++) {
+            for ($t = 0; $t < 4; $t++) {
                 $sql = "INSERT INTO castom_question (`tounament_id`,
                                             `text`
                                             ) 
@@ -122,7 +122,8 @@ try {
             break;
         case "edit_game_data":
             $sql = "UPDATE game SET `first_player_name`  = '{$input_data->first_name}',
-                                    `second_player_name` = '{$input_data->second_name}'                                                                                
+                                    `second_player_name` = '{$input_data->second_name}',
+                                    `date_start` = '".strtotime($input_data->date_start)."'                                                                                
                                     where id={$input_data->game_id}";
             $res = $db->sql_query($sql);
             if (!empty($input_data->first_player_score) || !empty($input_data->second_player_score)) {
@@ -179,8 +180,8 @@ try {
             if (empty($input_data->max_goals) || $input_data->max_goals < 0 || $input_data->max_goals == " ") {
                 throw new Exception("Необходимо указать максимальное количество побед!", 300);
             }
-            $sql = "UPDATE levels SET `max_goals`  = '{$input_data->max_goals}',
-                                      `date_start` = $date
+            $sql = "UPDATE levels SET `max_goals`  = '{$input_data->max_goals}'
+                                      -- `date_start` = $date
                                     where id={$input_data->level_id}";
             $res = $db->sql_query($sql);
             break;
