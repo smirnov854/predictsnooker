@@ -69,7 +69,7 @@ for($i = 0;$i < count($rows);$i++){
 
 
 $req = "SELECT  cq.*,ucq.answer as user_answer, cq.right_answer,
-                IF(cq.right_answer=user_answer, 3,0) as points_for_question
+                IF(cq.right_answer=ucq.answer, 3,0) as points_for_question
         FROM castom_question cq
         LEFT JOIN user_castom_question ucq ON ucq.castom_req_id=cq.id AND user_id={$user->data['user_id']}    
         WHERE tounament_id = $id";
