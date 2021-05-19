@@ -46,7 +46,7 @@ $sql = "SELECT t.id,
                points_castom_req,
                (
                   SELECT MAX(date_start)
-                  FROM levels 
+                  FROM game 
                   WHERE tournament_id=t.id
                ) as can_do_predict               
         FROM tournament t
