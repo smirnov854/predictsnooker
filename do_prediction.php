@@ -68,7 +68,8 @@ for($i = 0;$i < count($rows);$i++){
 
 
 
-$req = "SELECT  cq.*,ucq.answer as user_answer
+$req = "SELECT  cq.*,ucq.answer as user_answer, cq.right_answer,
+                IF(cq.right_answer=user_answer, 3,0) as points_for_question
         FROM castom_question cq
         LEFT JOIN user_castom_question ucq ON ucq.castom_req_id=cq.id AND user_id={$user->data['user_id']}    
         WHERE tounament_id = $id";
@@ -186,19 +187,7 @@ $player_list = $db->sql_fetchrowset($result);
             
 
         }
-        },
-        computed:{
-            points_counter:function(){
-                var res = 0;
-                for(var i in this.levels){
-                    for(var z in this.levels[i].games){
-                        res = res + this.levels[i].games[z].point_res + this.levels[i].games[z].point_winner
-                    }
-                }
-                return res;
-                
-            }
-        },
+        },       
         template:"<div class='col-lg-12 col-md-12 col-sm-12 d-flex flex-column-reverse'>" +
         "<div class='col-lg-4 col-md-12 col-sm-12 col-xs-12 my-md-2 float-left' v-for='(level,index) in levels' >" +
         "<label class='col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center bg-success'>{{level.games[0].level_name}}</label>" +
@@ -261,16 +250,16 @@ $player_list = $db->sql_fetchrowset($result);
         el:"#main_content",
         
         data:{                
-            points_counter : <?=$total_points?>,
+            points_counter : <?=$total_points + $req[0]['points_for_question'] + $req[1]['points_for_question']+$req[2]['points_for_question'] + $req[3]['points_for_question']?>,
             tournament_id: <?=$id?>,
             tournament_name:'<?=$rows[0]['tournament_name']?>',
             date_start:'<?=date("d.m.Y",$rows[0]['date_start'])?>',
             access_to_do_predict: <?= (time() < $rows[0]['game_date_start']) ? 'true' : 'false'?>,
             custom_req :[
-                {req_id:'<?=$req[0]['id']?>',text:'<?=$req[0]['text']?>',user_answer:'<?=$req[0]['user_answer']?>'},
-                {req_id:'<?=$req[1]['id']?>',text:'<?=$req[1]['text']?>',user_answer:'<?=$req[1]['user_answer']?>'},
-                {req_id:'<?=$req[2]['id']?>',text:'<?=$req[2]['text']?>',user_answer:'<?=$req[2]['user_answer']?>'},
-                {req_id:'<?=$req[3]['id']?>',text:'<?=$req[3]['text']?>',user_answer:'<?=$req[3]['user_answer']?>'}
+                {req_id:'<?=$req[0]['id']?>',text:'<?=$req[0]['text']?>',user_answer:'<?=$req[0]['user_answer']?>',points:'<?=$req[0]['points_for_question']?>'},
+                {req_id:'<?=$req[1]['id']?>',text:'<?=$req[1]['text']?>',user_answer:'<?=$req[1]['user_answer']?>',points:'<?=$req[1]['points_for_question']?>'},
+                {req_id:'<?=$req[2]['id']?>',text:'<?=$req[2]['text']?>',user_answer:'<?=$req[2]['user_answer']?>',points:'<?=$req[2]['points_for_question']?>'},
+                {req_id:'<?=$req[3]['id']?>',text:'<?=$req[3]['text']?>',user_answer:'<?=$req[3]['user_answer']?>',points:'<?=$req[3]['points_for_question']?>'}
             ],
             players : [
                 <?php 
@@ -300,7 +289,7 @@ $player_list = $db->sql_fetchrowset($result);
                     alert("Ошибка обращения к серверу!")
             });
             }    
-        }
+        },        
         })
 </script>
 </body>
