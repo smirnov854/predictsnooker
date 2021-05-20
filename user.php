@@ -45,9 +45,9 @@ $sql = "SELECT t.id,
                point_res,
                points_castom_req,
                (
-                  SELECT MAX(date_start)
-                  FROM game 
-                  WHERE tournament_id=t.id
+                  SELECT right_answer
+                  FROM castom_question 
+                  WHERE tounament_id=t.id AND right_answer IS NOT NULL 
                ) as can_do_predict               
         FROM tournament t
         LEFT JOIN levels lvl ON lvl.tournament_id=t.id
@@ -94,13 +94,13 @@ $rows = $db->sql_fetchrowset($result);
             <tr>
                 
                 <td><?=$row["name"]?></td>
-                <td><?= ($row['can_do_predict']==0) ? "Турнир еще не начался" : ((time()>$row['can_do_predict'] && $row['can_do_predict']!=0 ) ? "Турнир завершен" : "Текущий турнир")?></td>
+                <td><?= (empty($row['can_do_predict'])  ? "Турнир завершен" : "Прием прогнозов")?></td>
                 <td title="за доп вопросы <?=$row['points_castom_req']?>, за угаданный счет/победителей <?=$row['point_res']?>"><?=$row['points_castom_req'] + $row['point_res']?></td>
                 <!--<td><?=$row["pairs_amount"]?></td>
                 <td><?=$row["cnt"]?></td>-->
                 <td title="Просмотреть турнир">
                     <a class="btn btn-success-light" href="do_prediction.php?id=<?=$row['id']?>">
-                        <?= ((time()<$row['can_do_predict']) || $row['can_do_predict']==0) ? "Сделать прогноз" : "Посмотреть результат"?>
+                        <?= (empty($row['can_do_predict'])) ? "Сделать прогноз" : "Посмотреть результат"?>
                     </a>
                 </td>
             </tr>
@@ -112,8 +112,8 @@ $rows = $db->sql_fetchrowset($result);
     
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/v-mask/dist/v-mask.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
