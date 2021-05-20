@@ -8,6 +8,7 @@ include($phpbb_root_path . 'common.' . $phpEx);
 $user->session_begin();
 $auth->acl($user->data);
 $user->setup();
+
 if ($user->data['user_id'] == ANONYMOUS)
 {
     login_box('', $user->lang['LOGIN']);
@@ -78,7 +79,7 @@ $rows = $db->sql_fetchrowset($result);
 
 
 <div id="vue_app">
-    <img src="Logo.jpeg" class="float-left mx-auto">
+    <img src="logo.png" class="float-left mx-auto">
     <table class="table table-bordered">
         <thead>
         <tr>            
@@ -95,13 +96,13 @@ $rows = $db->sql_fetchrowset($result);
             <tr>
                 
                 <td><?=$row["name"]?></td>
-                <td><?= (empty($row['can_do_predict'])  ? "Турнир завершен" : "Прием прогнозов")?></td>
+                <td><?= (!empty($row['can_do_predict'])  ? "Турнир завершен" : "Прием прогнозов")?></td>
                 <td title="за доп вопросы <?=$row['points_castom_req']?>, за угаданный счет/победителей <?=$row['point_res']?>"><?=$row['points_castom_req'] + $row['point_res']?></td>
                 <!--<td><?=$row["pairs_amount"]?></td>
                 <td><?=$row["cnt"]?></td>-->
                 <td title="Просмотреть турнир">
                     <a class="btn btn-success-light" href="do_prediction.php?id=<?=$row['id']?>">
-                        <?= (!empty($row['can_do_predict'])) ? "Сделать прогноз" : "Посмотреть результат"?>
+                        <?= (empty($row['can_do_predict'])) ? "Сделать прогноз" : "Посмотреть результат"?>
                     </a>
                 </td>
             </tr>
