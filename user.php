@@ -101,7 +101,7 @@ $rows = $db->sql_fetchrowset($result);
                 <td><?=$row["cnt"]?></td>-->
                 <td title="Просмотреть турнир">
                     <a class="btn btn-success-light" href="do_prediction.php?id=<?=$row['id']?>">
-                        <?= (empty($row['can_do_predict'])) ? "Сделать прогноз" : "Посмотреть результат"?>
+                        <?= (!empty($row['can_do_predict'])) ? "Сделать прогноз" : "Посмотреть результат"?>
                     </a>
                 </td>
             </tr>
