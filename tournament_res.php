@@ -25,21 +25,21 @@ $sql = "SELECT u.username, SUM(
                               IF(g.first_player_score > g.second_player_score AND up.first_player_score = g.first_player_score OR 
                                  g.first_player_score < g.second_player_score AND up.second_player_score=g.second_player_score,1,0)) as point_res,
         ( 
-                SELECT SUM(IF(ucq1.answer = cq1.right_answer,3,0))
+                SELECT SUM(IFNULL(IF(ucq1.answer = cq1.right_answer,3,0),0))
                 FROM `user_castom_question` ucq1
                 LEFT JOIN castom_question cq1 ON cq1.id=ucq1.`castom_req_id`
                 WHERE ucq1.user_id = u.user_id AND cq1.tounament_id=g.tournament_id    
-         ) as points_castom_req,
-         SUM(
-                              IF(up.first_player_score = g.first_player_score AND up.second_player_score=g.second_player_score,3,0)+
+        ) as points_castom_req,
+        SUM(
+                              IF(up.first_player_score = g.first_player_score AND up.second_player_score=g.second_player_score,3,0) +
                               IF(g.first_player_score > g.second_player_score AND up.first_player_score = g.first_player_score OR 
-                                 g.first_player_score < g.second_player_score AND up.second_player_score=g.second_player_score,1,0))+
+                                 g.first_player_score < g.second_player_score AND up.second_player_score=g.second_player_score,1,0)) +
         ( 
-                SELECT SUM(IF(ucq1.answer = cq1.right_answer,3,0))
+                SELECT SUM(IFNULL(IF(ucq1.answer = cq1.right_answer,3,0),0))
                 FROM `user_castom_question` ucq1
                 LEFT JOIN castom_question cq1 ON cq1.id=ucq1.`castom_req_id`
                 WHERE ucq1.user_id = u.user_id AND cq1.tounament_id=g.tournament_id    
-         ) as res_points
+        ) as res_points
         FROM user_prediction up 
         LEFT JOIN game g ON g.id=up.game_id        
         LEFT JOIN ". USERS_TABLE ." as u  ON up.user_id=u.user_id  
