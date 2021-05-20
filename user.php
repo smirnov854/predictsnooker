@@ -48,6 +48,7 @@ $sql = "SELECT t.id,
                   SELECT right_answer
                   FROM castom_question 
                   WHERE tounament_id=t.id AND right_answer IS NOT NULL 
+                  LIMIT 1
                ) as can_do_predict               
         FROM tournament t
         LEFT JOIN levels lvl ON lvl.tournament_id=t.id
